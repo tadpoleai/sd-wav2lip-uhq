@@ -87,18 +87,15 @@ class W2l:
         n = 0
         for rect, image in zip(predictions, images):
             if rect is None:
-                print("Hum : " + str(n))
-                cv2.imwrite(self.wav2lip_folder + '/temp/faulty_frame.jpg',
-                            image)  # check this frame where the face was not detected.
-                raise ValueError('Face not detected! Ensure the video contains a face in all the frames.')
+                results.append([image, []])
+            else:
+                y1 = max(0, rect[1] - pady1)
+                y2 = min(image.shape[0], rect[3] + pady2)
+                x1 = max(0, rect[0] - padx1)
+                x2 = min(image.shape[1], rect[2] + padx2)
 
-            y1 = max(0, rect[1] - pady1)
-            y2 = min(image.shape[0], rect[3] + pady2)
-            x1 = max(0, rect[0] - padx1)
-            x2 = min(image.shape[1], rect[2] + padx2)
-
-            results.append([x1, y1, x2, y2])
-            n += 1
+                results.append([x1, y1, x2, y2])
+                n += 1
 
         boxes = np.array(results)
         if not self.nosmooth: boxes = self.get_smoothened_boxes(boxes, T=5)
