@@ -125,7 +125,15 @@ class W2l:
             frame_to_save = frames[idx].copy()
             face, coords = face_det_results[idx].copy()
 
-            face = cv2.resize(face, (self.img_size, self.img_size))
+            #face = cv2.resize(face, (self.img_size, self.img_size))
+
+            if len(coords) == 0: # Check if there are no face coordinates
+                # Add a random matrix of shape (96x96x3) to img_batch and an empty list to coords_batch
+                face = np.random.rand(args.img_size, args.img_size, 3) * 255
+                coords_batch.append([])
+            else:
+                face = cv2.resize(face, (args.img_size, args.img_size))
+                coords_batch.append(coords)
 
             img_batch.append(face)
             mel_batch.append(m)
@@ -270,10 +278,17 @@ class W2l:
 
             for p, f, c in zip(pred, frames, coords):
                 y1, y2, x1, x2 = c
-                p = cv2.resize(p.astype(np.uint8), (x2 - x1, y2 - y1))
+                # p = cv2.resize(p.astype(np.uint8), (x2 - x1, y2 - y1))
 
-                f[y1:y2, x1:x2] = p
-                out.write(f)
+                # f[y1:y2, x1:x2] = p
+                # out.write(f)
+
+                if len(c) == 0:  # Check if there are no face coordinates (no face detected)
+                    out.write(f)  # Write the original frame without lip-syncing
+                else:
+                    p = cv2.resize(p.astype(np.uint8), (x2 - x1, y2 - y1))
+                    f[y1:y2, x1:x2] = p
+                    out.write(f)  # Write the lip-synced frame to the output video
 
         out.release()
         # release memory
